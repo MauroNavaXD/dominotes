@@ -1,0 +1,17 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1. Agregar el campo `dueDate` al modelo `Task`": [
+      {
+        "executionId": "ec609027-531d-43f2-b77d-f476fb14920b",
+        "chatSessionId": "sess_9e89ccee-93c8-40c1-9acb-16c6fb8013b0",
+        "timestamp": 1792093553514
+      },
+      {
+        "executionId": "ec609027-531d-43f2-b77d-f476fb14920b",
+        "chatSessionId": "sess_9e89ccee-93c8-40c1-9acb-16c6fb8013b0",
+        "timestamp": 1792093714017
+      }
+    ]
+  }
+}
