@@ -1,0 +1,83 @@
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Task, TaskStatus, TASK_STATUSES, TASK_STATUS_LABELS } from '../../models/task';
+import { TaskDbService } from '../../services/task-db.service';
+
+@Component({
+  selector: 'app-home',
+  imports: [FormsModule],
+  templateUrl: './home.html',
+})
+export class Home implements OnInit {
+  private readonly db = inject(TaskDbService);
+
+  protected readonly tasks = this.db.tasks;
+  protected readonly statuses = TASK_STATUSES;
+  protected readonly statusLabels = TASK_STATUS_LABELS;
+
+  /** Title typed in the creation row. */
+  protected readonly newTitle = signal('');
+
+  ngOnInit(): void {
+    void this.db.load();
+  }
+
+  protected createTask(): void {
+    const title = this.newTitle().trim();
+    if (!title) {
+      return;
+    }
+
+    void this.db.create(title);
+    this.newTitle.set('');
+  }
+
+  protected updateTitle(task: Task, title: string): void {
+    const trimmed = title.trim();
+    if (!trimmed || trimmed === task.title) {
+      return;
+    }
+
+    void this.db.update(task.id, { title: trimmed });
+  }
+
+  protected updateStatus(task: Task, status: TaskStatus): void {
+    if (status === task.status) {
+      return;
+    }
+
+    void this.db.update(task.id, { status });
+  }
+
+  protected updateEndDate(task: Task, value: string): void {
+    const endDate = value ? value : null;
+    if (endDate === task.endDate) {
+      return;
+    }
+
+    void this.db.update(task.id, { endDate });
+  }
+
+  protected removeTask(task: Task): void {
+    void this.db.remove(task.id);
+  }
+
+  protected formatCreatedAt(iso: string): string {
+    return new Date(iso).toLocaleDateString('es-MX', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+    });
+  }
+
+  protected statusClass(status: TaskStatus): string {
+    switch (status) {
+      case 'done':
+        return 'bg-green-100 text-green-700';
+      case 'in-progress':
+        return 'bg-amber-100 text-amber-700';
+      default:
+        return 'bg-slate-100 text-slate-600';
+    }
+  }
+}

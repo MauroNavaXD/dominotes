@@ -1,0 +1,108 @@
+<div class="min-h-dvh bg-slate-50 py-10 px-4">
+  <div class="mx-auto max-w-4xl">
+    <header class="mb-8">
+      <h1 class="text-3xl font-semibold text-slate-800">DomiNotes</h1>
+      <p class="mt-1 text-sm text-slate-500">Tus tareas, guardadas localmente en tu navegador.</p>
+    </header>
+
+    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <table class="w-full border-collapse text-left text-sm">
+        <thead class="bg-slate-100 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <tr>
+            <th class="px-4 py-3">Tarea</th>
+            <th class="px-4 py-3 w-40">Estado</th>
+            <th class="px-4 py-3 w-36">Creada</th>
+            <th class="px-4 py-3 w-44">Fecha fin</th>
+            <th class="px-4 py-3 w-12"></th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-slate-100">
+          <!-- Creation row -->
+          <tr class="bg-slate-50/60">
+            <td class="px-4 py-3">
+              <input
+                type="text"
+                [ngModel]="newTitle()"
+                (ngModelChange)="newTitle.set($event)"
+                (keyup.enter)="createTask()"
+                placeholder="Nueva tarea…"
+                class="w-full rounded-md border border-slate-200 bg-white px-3 py-1.5 text-slate-700 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
+                aria-label="Título de la nueva tarea"
+              />
+            </td>
+            <td class="px-4 py-3 text-slate-400">—</td>
+            <td class="px-4 py-3 text-slate-400">—</td>
+            <td class="px-4 py-3 text-slate-400">—</td>
+            <td class="px-4 py-3">
+              <button
+                type="button"
+                (click)="createTask()"
+                [disabled]="!newTitle().trim()"
+                class="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Agregar tarea"
+              >
+                Agregar
+              </button>
+            </td>
+          </tr>
+
+          <!-- Task rows -->
+          @for (task of tasks(); track task.id) {
+            <tr class="hover:bg-slate-50">
+              <td class="px-4 py-2">
+                <input
+                  type="text"
+                  [value]="task.title"
+                  (blur)="updateTitle(task, $any($event.target).value)"
+                  (keyup.enter)="$any($event.target).blur()"
+                  class="w-full rounded-md border border-transparent bg-transparent px-3 py-1.5 text-slate-700 outline-none hover:border-slate-200 focus:border-blue-400 focus:bg-white focus:ring-1 focus:ring-blue-400"
+                  aria-label="Título de la tarea"
+                />
+              </td>
+              <td class="px-4 py-2">
+                <select
+                  [value]="task.status"
+                  (change)="updateStatus(task, $any($event.target).value)"
+                  [class]="'w-full cursor-pointer rounded-md border-0 px-2.5 py-1.5 text-xs font-medium outline-none focus:ring-1 focus:ring-blue-400 ' + statusClass(task.status)"
+                  aria-label="Estado de la tarea"
+                >
+                  @for (status of statuses; track status) {
+                    <option [value]="status">{{ statusLabels[status] }}</option>
+                  }
+                </select>
+              </td>
+              <td class="px-4 py-2 text-slate-500">{{ formatCreatedAt(task.createdAt) }}</td>
+              <td class="px-4 py-2">
+                <input
+                  type="date"
+                  [value]="task.endDate ?? ''"
+                  (change)="updateEndDate(task, $any($event.target).value)"
+                  class="w-full rounded-md border border-transparent bg-transparent px-3 py-1.5 text-slate-700 outline-none hover:border-slate-200 focus:border-blue-400 focus:bg-white focus:ring-1 focus:ring-blue-400"
+                  aria-label="Fecha fin de la tarea"
+                />
+              </td>
+              <td class="px-4 py-2 text-center">
+                <button
+                  type="button"
+                  (click)="removeTask(task)"
+                  class="rounded-md p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                  aria-label="Eliminar tarea"
+                  title="Eliminar"
+                >
+                  ✕
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="px-4 py-10 text-center text-sm text-slate-400">
+                No hay tareas todavía. Crea la primera arriba.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
