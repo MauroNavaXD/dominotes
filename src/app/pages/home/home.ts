@@ -52,15 +52,6 @@ export class Home implements OnInit {
     void this.db.update(task.id, { status });
   }
 
-  protected updateEndDate(task: Task, value: string): void {
-    const endDate = value ? value : null;
-    if (endDate === task.endDate) {
-      return;
-    }
-
-    void this.db.update(task.id, { endDate });
-  }
-
   protected removeTask(task: Task): void {
     void this.db.remove(task.id);
   }
@@ -86,6 +77,16 @@ export class Home implements OnInit {
 
   protected formatCreatedAt(iso: string): string {
     return new Date(iso).toLocaleDateString('es-MX', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+    });
+  }
+
+  /** Format a date-only (YYYY-MM-DD) end date as local date, avoiding UTC shift. */
+  protected formatEndDate(date: string): string {
+    const [year, month, day] = date.split('-').map(Number);
+    return new Date(year, month - 1, day).toLocaleDateString('es-MX', {
       year: 'numeric',
       month: 'short',
       day: '2-digit',

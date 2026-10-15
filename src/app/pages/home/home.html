@@ -73,14 +73,12 @@
                 </select>
               </td>
               <td class="px-4 py-2 text-slate-500">{{ formatCreatedAt(task.createdAt) }}</td>
-              <td class="px-4 py-2">
-                <input
-                  type="date"
-                  [value]="task.endDate ?? ''"
-                  (change)="updateEndDate(task, $any($event.target).value)"
-                  class="w-full rounded-md border border-transparent bg-transparent px-3 py-1.5 text-slate-700 outline-none hover:border-slate-200 focus:border-blue-400 focus:bg-white focus:ring-1 focus:ring-blue-400"
-                  aria-label="Fecha fin de la tarea"
-                />
+              <td class="px-4 py-2 text-slate-500">
+                @if (task.endDate) {
+                  {{ formatEndDate(task.endDate) }}
+                } @else {
+                  <span class="text-slate-400">—</span>
+                }
               </td>
               <td class="px-4 py-2 text-center">
                 <div class="flex items-center justify-center gap-1">
