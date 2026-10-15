@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Task, TaskStatus, TASK_STATUSES, TASK_STATUS_LABELS } from '../../models/task';
+import { Task, TaskLogEntry, TaskStatus, TASK_STATUSES, TASK_STATUS_LABELS } from '../../models/task';
 import { TaskDbService } from '../../services/task-db.service';
 
 @Component({
@@ -17,6 +17,9 @@ export class Home implements OnInit {
 
   /** Title typed in the creation row. */
   protected readonly newTitle = signal('');
+
+  /** Id of the task whose change history is open, or null. */
+  protected readonly openLogTaskId = signal<string | null>(null);
 
   ngOnInit(): void {
     void this.db.load();
@@ -60,6 +63,25 @@ export class Home implements OnInit {
 
   protected removeTask(task: Task): void {
     void this.db.remove(task.id);
+  }
+
+  protected toggleLog(task: Task): void {
+    this.openLogTaskId.update((current) => (current === task.id ? null : task.id));
+  }
+
+  protected closeLog(): void {
+    this.openLogTaskId.set(null);
+  }
+
+  protected logEntriesNewestFirst(task: Task): TaskLogEntry[] {
+    return [...(task.log ?? [])].reverse();
+  }
+
+  protected formatLogTimestamp(iso: string): string {
+    return new Date(iso).toLocaleString('es-MX', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
   }
 
   protected formatCreatedAt(iso: string): string {

@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { Task } from '../models/task';
+import { Task, TaskLogEntry, TASK_STATUS_LABELS } from '../models/task';
 
 const DB_NAME = 'dominotes';
 const DB_VERSION = 1;
@@ -63,6 +63,7 @@ export class TaskDbService {
       status: 'pending',
       createdAt: new Date().toISOString(),
       endDate: null,
+      log: [this.logEntry('Tarea creada')],
     };
 
     const store = await this.tx('readwrite');
@@ -79,7 +80,42 @@ export class TaskDbService {
       return;
     }
 
-    const updated: Task = { ...current, ...changes };
+    const entries: TaskLogEntry[] = [];
+    const effective: Partial<Pick<Task, 'title' | 'status' | 'endDate'>> = { ...changes };
+
+    // Title change.
+    if (changes.title !== undefined && changes.title !== current.title) {
+      entries.push(this.logEntry(`Título cambiado a "${changes.title}"`));
+    }
+
+    // Status change.
+    if (changes.status !== undefined && changes.status !== current.status) {
+      entries.push(this.logEntry(`Estado cambiado a ${TASK_STATUS_LABELS[changes.status]}`));
+    }
+
+    if (changes.status !== undefined) {
+      // Automatic endDate side effect driven by the status.
+      if (changes.status === 'done' && !('endDate' in changes)) {
+        effective.endDate = this.localDateString(new Date());
+        entries.push(this.logEntry(`Fecha fin establecida automáticamente a ${effective.endDate}`));
+      } else if (changes.status !== 'done' && current.endDate !== null) {
+        effective.endDate = null;
+        entries.push(this.logEntry('Fecha fin limpiada automáticamente'));
+      }
+    } else if ('endDate' in changes && changes.endDate !== current.endDate) {
+      // Manual endDate change (no status change drove it).
+      entries.push(
+        this.logEntry(
+          changes.endDate ? `Fecha fin cambiada a ${changes.endDate}` : 'Fecha fin eliminada',
+        ),
+      );
+    }
+
+    const updated: Task = {
+      ...current,
+      ...effective,
+      log: [...(current.log ?? []), ...entries],
+    };
     const store = await this.tx('readwrite');
     await this.request(store.put(updated));
 
@@ -92,6 +128,19 @@ export class TaskDbService {
     await this.request(store.delete(id));
 
     this.tasks.update((list) => list.filter((task) => task.id !== id));
+  }
+
+  /** Build a log entry stamped with the current time. */
+  private logEntry(message: string): TaskLogEntry {
+    return { timestamp: new Date().toISOString(), message };
+  }
+
+  /** Local date as `YYYY-MM-DD` (matches `<input type="date">`; not UTC). */
+  private localDateString(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private request<T>(request: IDBRequest<T>): Promise<T> {
