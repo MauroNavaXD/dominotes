@@ -1,107 +1,286 @@
-# Implementation Plan — Auto end date on completion + per-task change history log
+# Plan de implementación — Calidad y seguridad en los scripts de validación
 
-Worktree root (use absolute paths; never the parent repo):
-`/Users/mau/Repositories/xaldigital/voi/capacitacion-kiro/dominotes/frontend/.worktrees/task-enddate-history`
+Proyecto: Angular 22 (`@angular/core` 22.2.3, CLI 22.2.2), npm 11, Vitest (builder `@angular/build:unit-test`), Prettier, `tsc` para typecheck. Trabajar DIRECTAMENTE en `/Users/mau/Repositories/xaldigital/voi/capacitacion-kiro/dominotes/frontend` (NO worktree).
 
-All commands below run from that worktree root.
+## Hallazgos de la exploración (decisiones fundamentadas)
 
-## Design decisions (made here, grounded in the current code)
+Estos hallazgos se obtuvieron leyendo el código y no deben re-derivarse:
 
-- **Where the side effects live.** `TaskDbService.update` already builds `updated = { ...current, ...changes }` and is the single write path for edits. Both the auto-endDate behavior and the log diffing go there, so the UI never has to reason about them. `home.ts` keeps calling `this.db.update(task.id, { ... })` unchanged. Rationale: centralizing avoids duplicated/inconsistent logic across the three `update*` methods in `home.ts`.
-- **Local date, not UTC.** `endDate` must match the `<input type="date">` value format (`YYYY-MM-DD`) and the user's local day. `toISOString()` is UTC and can roll a day, so a dedicated `localDateString(date)` helper builds the string from `getFullYear/getMonth/getDate`. Rationale: the task explicitly forbids `toISOString` for "today".
-- **Explicit-endDate precedence.** In `update`, if `changes.status === 'done'` and `changes.endDate` is NOT part of `changes`, auto-set `endDate` to today; if the caller passed `endDate` explicitly alongside the status, respect the caller's value. If `changes.status` is present and not `'done'`, force `endDate = null`. Rationale: matches "set automatically on completion, cleared on any non-done status" while leaving a door for explicit values.
-- **Log ordering.** Stored chronologically (append to the end). UI renders newest-first by iterating a reversed copy. Rationale: storage stays append-only and simple; display matches the newest-first convention already used for the task list.
-- **Missing `log` is `[]`.** Existing IndexedDB records predate the field. Every read path (`update` diff base, UI render) coalesces `current.log ?? []`. Rationale: no DB_VERSION bump, no migration, no crash on old records.
-- **History UI = expandable panel below the row**, toggled by a signal `openLogTaskId` holding the open task id (or null). Rationale: a full-row expansion row (`<tr>` with `colspan`) fits the existing table without introducing a dialog/overlay system or new styling primitives; close affordance is the same toggle button plus a close button in the panel.
+1. **Configuración de producción en `angular.json`**: el target `build` (builder `@angular/build:application`) tiene `configurations.production` (con `budgets` y `outputHashing: "all"`) y además `defaultConfiguration: "production"`. Por tanto `ng build` ya usa producción por defecto, pero se deja explícito `ng build --configuration production` para que la intención sea clara y robusta ante cambios futuros del default.
 
-## Items
+2. **Single-run de tests**: el builder de test es `@angular/build:unit-test` con `runner: vitest` (default). En su schema, `watch` "Defaults to `true` in TTY environments and `false` otherwise". Para garantizar una corrida única y determinista (incluso en una terminal TTY), el script `test:ci` debe forzar `--watch=false`. Decisión: `"test:ci": "ng test --watch=false"`. El spec existente (`src/app/app.spec.ts`) usa `vitest/globals` vía `tsconfig.spec.json`, así que la corrida única ya funciona con la config actual.
 
-- [ ] 1. Extend the model in `src/app/models/task.ts`.
-      Add `export interface TaskLogEntry { timestamp: string; message: string }` (timestamp = ISO string). Add `log: TaskLogEntry[]` to `Task` (document it as the chronological change history). Leave `TaskStatus`, `TASK_STATUSES`, `TASK_STATUS_LABELS` unchanged.
-      Files: `src/app/models/task.ts`
-      Verify: `npm run build` compiles with no type errors (this item alone will surface a compile error in `task-db.service.ts` where `create` builds a `Task` without `log` — that is fixed in item 2, so run the full build after item 2).
+3. **ESLint / compatibilidad con Angular 22**: `angular-eslint` v22 soporta oficialmente Angular 22 + TS 6 (release 22.0.0: "update to Angular 22 + TS 6"). El paquete moderno y unificado es `angular-eslint` (ya NO `@angular-eslint/schematics` como paquete separado para el flujo CLI). El comando recomendado por el README oficial v22 es `ng add angular-eslint`, que al instalar la última versión queda alineada con el Angular major más reciente (22). Decisión: usar `ng add angular-eslint --skip-confirmation`. Esto instala `angular-eslint`, `typescript-eslint` y `eslint`, crea `eslint.config.js` (flat config), registra `"schematicCollections": ["angular-eslint"]` en `angular.json` y añade el target `lint` (architect `@angular-eslint/builder:lint`) accesible vía `ng lint`.
+   - Contenido referenciado del README oficial de angular-eslint fue reformulado para cumplir restricciones de licencia.
 
-- [ ] 2. Implement helper + create-time log in `TaskDbService` (`src/app/services/task-db.service.ts`).
-      Import `TaskLogEntry`, `TASK_STATUS_LABELS` from `../models/task`. Add a private helper `private localDateString(date: Date): string` that returns `YYYY-MM-DD` from local `getFullYear()`, `getMonth()+1` (zero-padded), `getDate()` (zero-padded) — NOT `toISOString`. Add a small private `logEntry(message: string): TaskLogEntry` returning `{ timestamp: new Date().toISOString(), message }`. In `create`, initialize `log: [this.logEntry('Tarea creada')]` on the new task object.
-      Files: `src/app/services/task-db.service.ts`
-      Verify: `npm run build` passes with no errors; by reading the code confirm `localDateString` uses local getters and zero-pads month/day, and `create` seeds the `'Tarea creada'` entry.
+4. **Colisión del script `lint`**: `package.json` ya define `"lint": "npm run typecheck && npm run format:check"`. El schematic de angular-eslint añade el target architect `lint` (para `ng lint`) pero NO sobrescribe el script npm `lint`. Decisión de reorganización sensata (sin perder nada):
+   - Añadir `"lint:eslint": "ng lint"` (ESLint sobre .ts y .html de `src/`).
+   - Mantener `"lint"` como alias agregador y ampliarlo: `"lint": "npm run lint:eslint && npm run typecheck && npm run format:check"`.
+   - `validar.*` invocará `npm run lint:eslint` como paso dedicado de ESLint (y typecheck/format como pasos propios), para que el orden exacto solicitado sea explícito y el primer fallo detenga todo.
 
-- [ ] 3. Implement the diff/log/endDate side effects in `TaskDbService.update`.
-      Rework `update(id, changes)` so that, after finding `current`:
-      1. Start from `const entries: TaskLogEntry[] = [];` and a mutable copy of `changes` for the endDate side effect: `const effective = { ...changes };`.
-      2. **Title**: if `changes.title !== undefined && changes.title !== current.title`, push `` `Título cambiado a "${changes.title}"` ``.
-      3. **Status**: if `changes.status !== undefined && changes.status !== current.status`, push `` `Estado cambiado a ${TASK_STATUS_LABELS[changes.status]}` ``.
-      4. **Auto endDate from status** (only when `changes.status !== undefined`):
-         - If `changes.status === 'done'` and `!('endDate' in changes)`: set `effective.endDate = this.localDateString(new Date())` and push `` `Fecha fin establecida automáticamente a ${effective.endDate}` ``.
-         - If `changes.status !== 'done'` and the current `endDate` is not already null: set `effective.endDate = null` and push `'Fecha fin limpiada automáticamente'`.
-      5. **Manual endDate** (only when `'endDate' in changes` AND status did NOT drive it — i.e. `changes.status === undefined`): compare `changes.endDate` to `current.endDate`; if changed, push `` `Fecha fin cambiada a ${changes.endDate}` `` when truthy, else `'Fecha fin eliminada'`.
-      6. Build `updated: Task = { ...current, ...effective, log: [...(current.log ?? []), ...entries] }`.
-      7. Keep the existing `store.put(updated)` and signal update.
-      Note the ordering guard in step 5 (`changes.status === undefined`) prevents double-logging the endDate when a status change already produced the automatic entry.
-      Files: `src/app/services/task-db.service.ts`
-      Verify: `npm run build` passes; by reading the code confirm: (a) setting status to `done` without an explicit endDate yields today's local `YYYY-MM-DD` plus the "establecida automáticamente" entry; (b) setting status to a non-done value sets `endDate = null` plus "limpiada automáticamente" (only if it wasn't already null); (c) a manual endDate change (no status in `changes`) logs "cambiada a"/"eliminada" and is not double-logged; (d) `current.log ?? []` is used as the base so old records don't crash.
+5. **Formato Prettier de configs nuevas**: `eslint.config.js` generado debe pasar `format:check`. Pero `format:check` corre sobre `src/**/*.{ts,html,css,json}`, NO sobre `eslint.config.js` (está en la raíz, no en `src/`), así que no lo afecta. `package.json` SÍ no está en el glob de `src/`, por lo que Prettier tampoco lo valida; aun así se editará a mano respetando el estilo (2 espacios, comillas dobles en JSON) para no romper nada. **Acción preventiva**: tras editar `package.json`, correr `npx prettier --write package.json eslint.config.js` para normalizar y luego `npm run format:check` para confirmar que `src/` sigue en orden.
 
-- [ ] 4. Add the history toggle state + helpers in `src/app/pages/home/home.ts`.
-      Import `TaskLogEntry` from the model. Add `protected readonly openLogTaskId = signal<string | null>(null);`. Add `protected toggleLog(task: Task): void` that sets the signal to `task.id` if currently different, else `null`. Add `protected closeLog(): void { this.openLogTaskId.set(null); }`. Add `protected logEntriesNewestFirst(task: Task): TaskLogEntry[] { return [...(task.log ?? [])].reverse(); }`. Add `protected formatLogTimestamp(iso: string): string` returning a localized `es-MX` date+time (e.g. `toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })`). Leave existing `update*` methods untouched — they already route through `db.update`.
-      Files: `src/app/pages/home/home.ts`
-      Verify: `npm run build` passes; by reading the code confirm the signal defaults to `null`, `toggleLog` flips open/closed for the same id, and `logEntriesNewestFirst` reverses a copy (does not mutate `task.log`).
+6. **`.agents/` no está en `.gitignore`**: no afecta la tarea (el plan vive en `.agents/tasks/plan.md` por instrucción), pero el implementador debe evitar `git add -A`; agregar solo los archivos tocados por la tarea.
 
-- [ ] 5. Add the history button + expandable log panel in `src/app/pages/home/home.html`.
-      In the task-row actions `<td>` (the one holding the ✕ delete button), add a history button BEFORE the delete button: `type="button"`, `(click)="toggleLog(task)"`, `aria-label="Ver historial de la tarea"`, `title="Historial"`, slate styling matching the delete button (`rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700`), label a clock glyph `🕑` (or text `Log`). Immediately after the task `<tr>`, add a conditional expansion row inside the same `@for`:
-      ```
-      @if (openLogTaskId() === task.id) {
-        <tr class="bg-slate-50/80">
-          <td colspan="5" class="px-4 py-3">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Historial</h3>
-              <button type="button" (click)="closeLog()" aria-label="Cerrar historial" class="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700">✕</button>
-            </div>
-            @for (entry of logEntriesNewestFirst(task); track entry.timestamp) {
-              <div class="flex gap-3 py-1 text-sm">
-                <span class="w-40 shrink-0 text-slate-400">{{ formatLogTimestamp(entry.timestamp) }}</span>
-                <span class="text-slate-700">{{ entry.message }}</span>
-              </div>
-            } @empty {
-              <p class="text-sm text-slate-400">Sin cambios registrados.</p>
-            }
-          </td>
-        </tr>
-      }
-      ```
-      Keep the existing `colspan="5"` empty-state row and the 5-column header consistent (no new column added — the button lives in the existing actions column, so column count stays 5).
-      Files: `src/app/pages/home/home.html`
-      Verify: `npm run build` passes (Angular template type-checking covers the new bindings); by reading the markup confirm the history button has `type="button"` and an `aria-label`, the panel uses `colspan="5"`, renders newest-first via `logEntriesNewestFirst`, and offers a close button.
+## Orden exacto de validación a integrar (parando al primer fallo)
 
-## Verification (final, whole-task)
+`audit → eslint (lint:eslint) → typecheck → format:check → tests (test:ci) → build (build:check)`
 
-1. From the worktree root run the production build:
-   `npm run build`
-   Expected: completes with no TypeScript or Angular template errors (exit 0). This is the authoritative gate — it type-checks the model, service, component, and template together.
-2. Read-the-code logic checks (no runtime harness exists; `ng test`/vitest has no specs for these modules):
-   - `localDateString` builds `YYYY-MM-DD` from LOCAL date parts, zero-padded, and is used for the auto endDate — not `toISOString`.
-   - `update`: status→`done` sets today's endDate and logs "establecida automáticamente" (unless `endDate` passed explicitly); status→non-done sets `endDate=null` and logs "limpiada automáticamente" only when it wasn't already null.
-   - Manual endDate edits (no status in `changes`) still work and log "cambiada a <fecha>"/"eliminada", with no double-logging when a status change drove the endDate.
-   - `create` seeds `log: ['Tarea creada']`; every log read uses `current.log ?? []` / `task.log ?? []`.
-   - All new user-facing strings are Spanish; 2-space indent, single quotes, TS strict preserved; `DB_VERSION` unchanged (still `1`).
-   - History UI: button has `type` + `aria-label`, panel toggles via `openLogTaskId`, shows newest-first, has a close affordance, keeps the table at 5 columns.
+---
 
-## Verification note (evidence)
+## Pasos de implementación
 
-Ran `npm run build` (= `ng build`) from the worktree root on 2026-10-15. Result: SUCCESS, exit 0, no TypeScript or Angular template errors. Output:
+- [ ] 1. Instalar y configurar ESLint vía schematic de Angular (no interactivo).
+      Ejecutar desde la raíz del frontend: `npx ng add angular-eslint --skip-confirmation`.
+      Esto instala `angular-eslint`, `typescript-eslint` y `eslint` en `devDependencies`, crea `eslint.config.js` (flat config) en la raíz, agrega `"cli": { "schematicCollections": ["angular-eslint"] }` y el target `lint` en `angular.json`, y actualiza `package-lock.json`.
+      Archivos: `package.json`, `package-lock.json`, `angular.json`, `eslint.config.js` (nuevo).
+      Verificar: `npx ng lint` corre y reporta resultados (debe EJECUTARSE sin crash). Registrar cuántos hallazgos (errors/warnings) reporta sobre el código existente.
+      Nota de fallback: si `ng add angular-eslint` falla por incompatibilidad, ejecutar la versión pineada `npx ng add angular-eslint@22 --skip-confirmation`. Si aun así falla, pasar a configuración manual (ver paso 2). NO modificar código de la app para "arreglar" hallazgos de ESLint.
 
+- [ ] 2. (Solo si el paso 1 falla) Configurar ESLint manualmente con flat config.
+      Instalar exactamente: `npm install -D eslint@^9 angular-eslint@^22 typescript-eslint@^8` y crear `eslint.config.js` en la raíz con el contenido propuesto más abajo (sección "Contenido propuesto de eslint.config.js"). Añadir a mano el target `lint` en `angular.json` (`"lint": { "builder": "@angular-eslint/builder:lint", "options": { "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"] } }`).
+      Archivos: `package.json`, `package-lock.json`, `angular.json`, `eslint.config.js` (nuevo).
+      Verificar: `npx ng lint` se ejecuta sin crash y reporta hallazgos.
+
+- [ ] 3. Verificar/normalizar el contenido de `eslint.config.js` (flat config) para cubrir `.ts` y `.html` de `src/` con reglas recomendadas de angular-eslint.
+      Comparar el `eslint.config.js` generado con el contenido propuesto abajo. Debe usar `angular-eslint` (configs recomendadas tseslint + angular templates), con selectores de componente/directiva en prefijo `app` (consistente con `angular.json` `"prefix": "app"`). NO endurecer reglas más allá de las recomendadas; el objetivo es dejar la infraestructura lista, no refactorizar la app.
+      Archivos: `eslint.config.js`.
+      Verificar: `npx ng lint` pasa o solo reporta hallazgos (no errores de configuración). Documentar el conteo de hallazgos en el resumen final.
+
+- [ ] 4. Editar `package.json` para añadir los scripts nuevos y reorganizar `lint`.
+      Aplicar exactamente las ediciones de la sección "Ediciones exactas de package.json" más abajo: añadir `audit`, `test:ci`, `build:check`, `lint:eslint`, y ampliar `lint`. Mantener el bloque `scripts` ordenado y con el estilo JSON existente (2 espacios, comillas dobles).
+      Archivos: `package.json`.
+      Verificar: `npm run audit` corre (falla solo ante high/critical); `npm run test:ci` corre una sola vez y termina; `npm run build:check` compila en modo producción; `npm run lint:eslint` ejecuta ESLint. Luego `npx prettier --write package.json eslint.config.js` y `npm run format:check` (debe seguir pasando sobre `src/`).
+
+- [ ] 5. Reescribir `scripts/validar.sh` con el pipeline completo, `set -euo pipefail` y `trap` de error en español.
+      Reemplazar el contenido por el de la sección "Contenido exacto de validar.sh" más abajo: `set -euo pipefail`, `cd` a la raíz, y los 6 pasos en orden (Auditoría, ESLint, Tipado, Formato, Tests, Build) con secciones y emojis; `trap` que ante error imprime mensaje claro en español con el tip de `npm run format`. Al ser `set -e`, cada `npm run ...` que falle detiene el script y dispara el trap.
+      Archivos: `scripts/validar.sh`.
+      Verificar: `bash scripts/validar.sh` desde la carpeta `frontend` ejecuta los 6 pasos en orden y termina con el mensaje de éxito (si todo pasa) o con el mensaje del trap al primer fallo. Mantener permisos de ejecución (`chmod +x scripts/validar.sh`).
+
+- [ ] 6. Actualizar `scripts/validar.bat` con los pasos equivalentes y consistentes.
+      Reemplazar el contenido por el de la sección "Contenido exacto de validar.bat" más abajo: mismos 6 pasos en el mismo orden con etiquetas `[AUDIT]`, `[LINT]`, `[TYPE]`, `[FMT]`, `[TEST]`, `[BUILD]`, cada uno con `if errorlevel 1 goto :error`, manteniendo el bloque `:error` existente con el tip de `npm run format`.
+      Archivos: `scripts/validar.bat`.
+      Verificar (en Windows / revisión manual): el orden y cobertura coinciden 1:1 con `validar.sh`; cada paso tiene su `if errorlevel 1 goto :error`. En macOS validar la coherencia por lectura (no se ejecuta `.bat`).
+
+- [ ] 7. Actualizar la documentación de comandos npm en `README.md`.
+      En la tabla "Comandos npm equivalentes" añadir filas para `audit` (`npm run audit`), `test:ci` (`npm run test:ci`), `build:check` (`npm run build:check`) y `lint:eslint` (`npm run lint:eslint`), y ajustar la descripción de `lint` a "ESLint + tipado + formato". Actualizar la descripción del paso "Validar" en la tabla de scripts para reflejar que ahora cubre auditoría, ESLint, tipado, formato, tests y build.
+      Archivos: `README.md`.
+      Verificar: `npm run format:check` sigue pasando (README no está en el glob de Prettier, pero no debe romper nada); revisión de que la tabla refleja los scripts reales de `package.json`.
+
+- [ ] 8. Verificación integral final (ejecutar el pipeline completo end-to-end).
+      Correr `bash scripts/validar.sh` desde `frontend` y confirmar que los 6 pasos se ejecutan en el orden exacto y que el script se detiene al primer fallo si lo hubiera.
+      Archivos: ninguno (verificación).
+      Verificar: salida muestra Auditoría → ESLint → Tipado → Formato → Tests → Build. Registrar en el resumen: nombre de la config de producción usada (`production`), comando single-run (`ng test --watch=false`), camino de ESLint tomado (`ng add angular-eslint`), y número de hallazgos de ESLint sobre el código existente. Si ESLint reporta errores en código existente, NO modificar la app: reportar el conteo y dejar la infraestructura lista.
+
+---
+
+## Ediciones exactas de package.json
+
+Bloque `scripts` resultante (reemplaza el actual):
+
+```json
+"scripts": {
+  "ng": "ng",
+  "start": "ng serve",
+  "build": "ng build",
+  "build:check": "ng build --configuration production",
+  "watch": "ng build --watch --configuration development",
+  "test": "ng test",
+  "test:ci": "ng test --watch=false",
+  "format": "prettier --write \"src/**/*.{ts,html,css,json}\"",
+  "format:check": "prettier --check \"src/**/*.{ts,html,css,json}\"",
+  "typecheck": "tsc --noEmit -p tsconfig.app.json",
+  "audit": "npm audit --audit-level=high",
+  "lint:eslint": "ng lint",
+  "lint": "npm run lint:eslint && npm run typecheck && npm run format:check"
+}
 ```
-Application bundle generation complete. [0.718 seconds]
-Output location: .../.worktrees/task-enddate-history/dist/frontend
-main-*.js  264.13 kB (70.53 kB transfer)
+
+Notas:
+- `ng add angular-eslint` puede dejar también un target `lint` en `angular.json`; el script npm `lint:eslint` lo invoca con `ng lint`. No borrar el target de `angular.json`.
+- Las `devDependencies` de eslint/angular-eslint/typescript-eslint las agrega el schematic; no editarlas a mano salvo en el fallback manual (paso 2).
+
+## Contenido propuesto de eslint.config.js (flat config)
+
+Este es el contenido esperado del generado por el schematic v22; si difiere ligeramente en orden, respetar lo generado mientras cubra `.ts` y `.html` de `src/` con configs recomendadas. Úsese tal cual SOLO en el fallback manual (paso 2):
+
+```js
+// @ts-check
+const eslint = require('@eslint/js');
+const tseslint = require('typescript-eslint');
+const angular = require('angular-eslint');
+
+module.exports = tseslint.config(
+  {
+    files: ['**/*.ts'],
+    extends: [
+      eslint.configs.recommended,
+      ...tseslint.configs.recommended,
+      ...tseslint.configs.stylistic,
+      ...angular.configs.tsRecommended,
+    ],
+    processor: angular.processInlineTemplates,
+    rules: {
+      '@angular-eslint/directive-selector': [
+        'error',
+        { type: 'attribute', prefix: 'app', style: 'camelCase' },
+      ],
+      '@angular-eslint/component-selector': [
+        'error',
+        { type: 'element', prefix: 'app', style: 'kebab-case' },
+      ],
+    },
+  },
+  {
+    files: ['**/*.html'],
+    extends: [
+      ...angular.configs.templateRecommended,
+      ...angular.configs.templateAccessibility,
+    ],
+    rules: {},
+  },
+);
 ```
 
-Read-the-code checks confirmed:
-- `localDateString` builds `YYYY-MM-DD` from local `getFullYear/getMonth+1/getDate`, zero-padded; used for the auto endDate (no `toISOString`).
-- `update`: status→`done` without explicit `endDate` sets today's local date and logs "establecida automáticamente"; status→non-done sets `endDate=null` and logs "limpiada automáticamente" only when it wasn't already null; manual endDate (no status) logs "cambiada a"/"eliminada" with no double-logging.
-- `create` seeds `log: ['Tarea creada']`; all log reads coalesce `?? []`; `DB_VERSION` unchanged (still `1`).
-- History UI: per-row button (`type=button`, `aria-label`), expandable `colspan="5"` panel, newest-first, close button; table stays at 5 columns.
+Nota: el flat config generado puede usar `tseslint.config(...)`; mantener las configs `recommended` (no `strict`/`strictTypeChecked`) para no forzar refactors en la app, según la restricción de la tarea.
 
-## Notes / assumptions
+## Contenido exacto de validar.sh
 
-- No `ng test` specs cover these modules and the task's stated gate is the production build, so verification is `npm run build` plus the read-the-code checks above. If a reviewer wants runtime coverage, a follow-up could add vitest specs for `TaskDbService.update`, but that is out of scope here.
-- `track entry.timestamp` assumes timestamps are distinct per entry; since entries are appended one change at a time with `new Date().toISOString()`, collisions are not a practical concern for this local-first UI.
+```bash
+#!/usr/bin/env bash
+#
+# 🧪  validar.sh
+# Revisa calidad y seguridad del código antes de subir cambios.
+# Orden: Auditoría → ESLint → Tipado → Formato → Tests → Build.
+# Uso (desde la carpeta frontend): ./scripts/validar.sh
+#
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+error_handler() {
+  echo ""
+  echo "────────────────────────────────────────────────────────"
+  echo "❌  La validación encontró errores. Revisa el detalle arriba."
+  echo "💡  ¿Formato con errores? Corrígelo automáticamente con: npm run format"
+  echo ""
+}
+trap error_handler ERR
+
+echo ""
+echo "🧪  Validando el código de Dominotes Frontend..."
+echo "────────────────────────────────────────────────────────"
+
+echo ""
+echo "🔒  Auditando dependencias (npm audit)..."
+npm run audit
+echo "✅  Sin vulnerabilidades altas/críticas."
+
+echo ""
+echo "🧹  Revisando ESLint (Angular)..."
+npm run lint:eslint
+echo "✅  ESLint sin errores."
+
+echo ""
+echo "🔤  Revisando tipado (TypeScript)..."
+npm run typecheck
+echo "✅  Tipado correcto."
+
+echo ""
+echo "🎨  Revisando formato (Prettier)..."
+npm run format:check
+echo "✅  Formato correcto."
+
+echo ""
+echo "🧪  Ejecutando pruebas unitarias (Vitest)..."
+npm run test:ci
+echo "✅  Pruebas en verde."
+
+echo ""
+echo "🏗️   Compilando build de verificación (producción)..."
+npm run build:check
+echo "✅  Build de producción correcto."
+
+echo ""
+echo "────────────────────────────────────────────────────────"
+echo "🎉  ¡Todo en orden! El código pasó las validaciones."
+echo ""
+echo "💡  ¿Formato con errores? Corrígelo automáticamente con: npm run format"
+echo ""
+```
+
+## Contenido exacto de validar.bat
+
+```bat
+@echo off
+REM ========================================================
+REM  validar.bat  -  Calidad y seguridad del codigo.
+REM  Orden: Auditoria -> ESLint -> Tipado -> Formato -> Tests -> Build.
+REM  Uso (desde la carpeta frontend): scripts\validar.bat
+REM ========================================================
+setlocal
+
+cd /d "%~dp0.."
+
+echo.
+echo [TEST] Validando el codigo de Dominotes Frontend...
+echo --------------------------------------------------------
+
+echo.
+echo [AUDIT] Auditando dependencias (npm audit)...
+call npm run audit
+if errorlevel 1 goto :error
+echo [OK]   Sin vulnerabilidades altas/criticas.
+
+echo.
+echo [LINT] Revisando ESLint (Angular)...
+call npm run lint:eslint
+if errorlevel 1 goto :error
+echo [OK]   ESLint sin errores.
+
+echo.
+echo [TYPE] Revisando tipado (TypeScript)...
+call npm run typecheck
+if errorlevel 1 goto :error
+echo [OK]   Tipado correcto.
+
+echo.
+echo [FMT]  Revisando formato (Prettier)...
+call npm run format:check
+if errorlevel 1 goto :error
+echo [OK]   Formato correcto.
+
+echo.
+echo [TEST] Ejecutando pruebas unitarias (Vitest)...
+call npm run test:ci
+if errorlevel 1 goto :error
+echo [OK]   Pruebas en verde.
+
+echo.
+echo [BUILD] Compilando build de verificacion (produccion)...
+call npm run build:check
+if errorlevel 1 goto :error
+echo [OK]   Build de produccion correcto.
+
+echo.
+echo --------------------------------------------------------
+echo [DONE] Todo en orden! El codigo paso las validaciones.
+echo.
+echo [TIP]  Formato con errores? Corrigelo con: npm run format
+echo.
+goto :eof
+
+:error
+echo.
+echo [FAIL] La validacion encontro errores. Revisa el detalle arriba.
+echo [TIP]  Para corregir el formato automaticamente: npm run format
+exit /b 1
+```
+
+## Riesgos y supuestos
+
+- **Supuesto**: `ng add angular-eslint` funciona no interactivo con `--skip-confirmation`; si pidiera confirmaciones adicionales, el implementador puede usar `echo y | npx ng add angular-eslint` o el flag documentado. Fallback manual en paso 2.
+- **Riesgo**: ESLint puede reportar hallazgos en el código existente (p. ej. selectores, reglas de template accessibility). Según la tarea, NO refactorizar la app: usar reglas recomendadas y reportar el conteo. Si un hallazgo rompe `validar.sh` (ESLint devuelve exit!=0 por errores), evaluar bajar esa regla a `warn` dentro de `eslint.config.js` para no bloquear el pipeline, documentándolo; no tocar la app.
+- **Riesgo `npm audit`**: si hay vulnerabilidades high/critical sin fix disponible, `npm run audit` fallará y detendrá `validar.sh`. Es el comportamiento deseado (seguridad), pero debe reportarse al usuario qué vulnerabilidades aparecen.
+- **Build en TTY**: `ng test --watch=false` garantiza corrida única incluso en terminal interactiva.
+```
