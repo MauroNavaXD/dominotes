@@ -101,6 +101,18 @@
         "chatSessionId": "sess_faa32bc8-4274-4ab2-be38-7ce13bde845b",
         "timestamp": 1792650818657
       }
+    ],
+    "10. Ordenar las tareas por estado (solo presentación)": [
+      {
+        "executionId": "b29e3a68-6677-4f7b-8ea4-8822b2ec5822",
+        "chatSessionId": "sess_7a73af60-753f-450c-8b43-b88d9b766fa1",
+        "timestamp": 1792698324950
+      },
+      {
+        "executionId": "b29e3a68-6677-4f7b-8ea4-8822b2ec5822",
+        "chatSessionId": "sess_7a73af60-753f-450c-8b43-b88d9b766fa1",
+        "timestamp": 1792698456894
+      }
     ]
   }
 }

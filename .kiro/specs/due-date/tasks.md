@@ -47,7 +47,7 @@
   - Añadir `title` y `aria-label` indicando que la tarea está vencida.
   - _Requisitos: 5.1, 5.2, 5.3, 5.4_
 
-- [ ] 10. Ordenar las tareas por estado (solo presentación)
+- [x] 10. Ordenar las tareas por estado (solo presentación)
   - En `TaskDbService.sort()` (`src/app/services/task-db.service.ts`), reemplazar el orden único por `createdAt` por un orden de dos claves: primero por prioridad de estado (`in-progress` → `pending` → `done`) mediante un mapa `STATUS_RANK`, y como clave secundaria `createdAt` descendente para un orden estable dentro de cada grupo.
   - Garantizar que el ordenamiento sea solo de presentación: `sort()` devuelve un arreglo nuevo y no muta ni re-persiste los objetos `Task` (los `store.add`/`store.put` siguen guardando la tarea sin el criterio de orden).
   - Como `sort()` ya se invoca en `load()`, `create()` y `update()`, verificar que un cambio de `status` reubique la tarea en el grupo correcto y refresque el signal `tasks`.

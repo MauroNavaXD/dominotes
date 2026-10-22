@@ -1,10 +1,17 @@
 import { Injectable, signal } from '@angular/core';
-import { Task, TaskLogEntry, TASK_STATUS_LABELS } from '../models/task';
+import { Task, TaskLogEntry, TaskStatus, TASK_STATUS_LABELS } from '../models/task';
 import { localDateString } from '../utils/date';
 
 const DB_NAME = 'dominotes';
 const DB_VERSION = 1;
 const STORE_NAME = 'tasks';
+
+/** Prioridad de presentación por estado: menor = primero. */
+const STATUS_RANK: Record<TaskStatus, number> = {
+  'in-progress': 0,
+  'pending': 1,
+  'done': 2,
+};
 
 /**
  * Local-first task storage backed by IndexedDB.
@@ -159,7 +166,19 @@ export class TaskDbService {
     });
   }
 
+  /**
+   * Presentation-only ordering: primary by status priority
+   * (in-progress → pending → done), secondary by createdAt descending for a
+   * stable order within each group. Returns a new array and never mutates or
+   * re-persists the Task objects.
+   */
   private sort(tasks: Task[]): Task[] {
-    return [...tasks].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return [...tasks].sort((a, b) => {
+      const byStatus = STATUS_RANK[a.status] - STATUS_RANK[b.status];
+      if (byStatus !== 0) {
+        return byStatus;
+      }
+      return b.createdAt.localeCompare(a.createdAt);
+    });
   }
 }
