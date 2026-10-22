@@ -16,6 +16,8 @@ export interface Task {
   createdAt: string;
   /** End date, editable by the user. ISO string (date only) or null. */
   endDate: string | null;
+  /** Fecha de vencimiento ingresada manualmente. ISO date-only (YYYY-MM-DD) o null. */
+  dueDate: string | null;
   /** Chronological change history (oldest first). */
   log: TaskLogEntry[];
 }
