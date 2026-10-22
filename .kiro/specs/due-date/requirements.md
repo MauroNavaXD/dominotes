@@ -88,3 +88,14 @@ Decisiones de producto acordadas:
 1. CUANDO se agrega la columna "Vencimiento" ENTONCES el sistema DEBERÁ actualizar el encabezado de la tabla para incluirla.
 2. CUANDO se renderiza la fila de creación ENTONCES el sistema DEBERÁ incluir la celda correspondiente a la nueva columna.
 3. CUANDO se renderiza la fila expandida de historial o el estado vacío ENTONCES el sistema DEBERÁ ajustar el `colspan` para reflejar el nuevo número total de columnas.
+
+### Requisito 8 — Orden visual de las tareas por estado
+
+**Historia de usuario:** Como usuario, quiero que las tareas se ordenen visualmente según su estado, para ver primero lo que está en progreso y por último lo ya terminado.
+
+#### Criterios de aceptación
+
+1. WHEN se muestra la lista de tareas ENTONCES el sistema DEBERÁ ordenarlas de forma descendente por estado en el siguiente orden: primero las tareas **en progreso**, después las **pendientes** y por último las **terinadas** (`done`).
+2. CUANDO existen varias tareas dentro del mismo estado ENTONCES el sistema DEBERÁ mantener entre ellas un orden estable y predecible (por ejemplo, el orden existente de creación/persistencia).
+3. CUANDO cambmia el estado de una tarea ENTONCES el sistema DEBERÁ reubicarla en el grupo correspondiente respetando el orden descendente definido.
+4. CUANDO se aplica el orden por estado ENTONCES el sistema NO DEBERÁ alterar los datos persistidos de las tareas; el ordenamiento DEBERÁ ser únicamente de presentación.

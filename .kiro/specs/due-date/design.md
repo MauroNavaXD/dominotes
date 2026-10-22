@@ -4,6 +4,8 @@
 
 Se agrega un campo `dueDate` independiente al modelo `Task`, editable manualmente desde una nueva columna "Vencimiento" en la tabla de tareas. Una tarea se marca como **vencida** cuando `dueDate < hoy` (comparación por fecha local) y no está en `done`. El estado de vencimiento se recalcula en vivo mediante una señal reactiva de "fecha de hoy" que se refresca periódicamente, además de al cargar la UI.
 
+Además, la lista de tareas se **ordena por estado** únicamente para presentación (primero *en progreso*, luego *pendientes* y por último *completadas*), reutilizando el `sort()` centralizado del servicio sin modificar los datos persistidos.
+
 El diseño reutiliza los patrones ya presentes en el proyecto:
 - Persistencia local-first en IndexedDB con un espejo reactivo (`signal<Task[]>`) en `TaskDbService`.
 - Logging automático de cambios en el método `update()`.
@@ -60,7 +62,44 @@ Nota de compatibilidad: las tareas antiguas carecen de `dueDate`. El código de 
 
   La rama de `dueDate` no debe interferir con la cadena `if/else` existente que maneja los efectos de `status` sobre `endDate`; se evalúa de forma separada para que un cambio de `dueDate` no dispare ni cancele los efectos de `endDate`.
 
-El resto de la mecánica (apertura perezosa de la DB, transacciones, `sort`, espejo en el signal) no cambia.
+- **`sort(tasks)` — orden por estado (Requisito 8)**: el método privado `sort()` deja de ordenar
+  únicamente por `createdAt` y pasa a ordenar primero por **prioridad de estado** y, como clave
+  secundaria estable, por `createdAt` descendente:
+
+  ```ts
+  // Prioridad de presentación: menor = primero.
+  const STATUS_RANK: Record<TaskStatus, number> = {
+    'in-progress': 0,
+    'pending': 1,
+    'done': 2,
+  };
+
+  private sort(tasks: Task[]): Task[] {
+    return [...tasks].sort((a, b) => {
+      const byStatus = STATUS_RANK[a.status] - STATUS_RANK[b.status];
+      if (byStatus !== 0) {
+        return byStatus;
+      }
+      // Dentro del mismo estado: orden estable y predecible por creación (desc).
+      return b.createdAt.localeCompare(a.createdAt);
+    });
+  }
+  ```
+
+  - **Clave primaria**: `STATUS_RANK` mapea `in-progress → 0`, `pending → 1`, `done → 2`, de modo
+    que las tareas *en progreso* aparecen primero y las *completadas* al final (Req. 8.1).
+  - **Clave secundaria estable**: cuando dos tareas comparten estado, el comparador cae en
+    `createdAt` descendente, garantizando un orden determinista y predecible dentro del grupo
+    (Req. 8.2). El comparador es total (nunca devuelve `0` salvo empate real de ambas claves),
+    por lo que el resultado no depende de la estabilidad del `sort` del motor.
+  - **Reubicación en vivo**: como `sort()` ya se invoca en `load()`, `create()` y `update()`, un
+    cambio de `status` reordena automáticamente la tarea al grupo correcto y refresca el signal
+    `tasks`, re-renderizando la tabla (Req. 8.3).
+  - **Solo presentación**: `sort()` devuelve un **arreglo nuevo** y no muta cada `Task`; las
+    operaciones `store.add`/`store.put` persisten el objeto de tarea sin el criterio de orden, por
+    lo que el ordenamiento no altera los datos en IndexedDB (Req. 8.4).
+
+El resto de la mecánica (apertura perezosa de la DB, transacciones, espejo en el signal) no cambia.
 
 ### 3. Componente Home (`src/app/pages/home/home.ts`)
 
@@ -112,5 +151,10 @@ Responsabilidades nuevas:
   - `dueDate < hoy` y `status !== 'done'` ⇒ vencida.
   - `dueDate < hoy` y `status === 'done'` ⇒ no vencida.
 - **Servicio `update`**: cambiar `dueDate` registra la entrada de log correcta y no altera `endDate`/`status`.
+- **Servicio `sort` — orden por estado** (Requisito 8):
+  - Dada una mezcla de tareas, el resultado agrupa `in-progress` → `pending` → `done` en ese orden.
+  - Dentro del mismo estado, el orden secundario por `createdAt` descendente es estable y predecible.
+  - Tras cambiar el `status` de una tarea vía `update()`, la tarea queda reubicada en el grupo correcto.
+  - El ordenamiento no modifica los registros persistidos (los objetos `Task` guardados no cambian).
 - **Verificación de build**: ejecutar la compilación del proyecto (Angular) tras los cambios.
 - **Verificación visual**: comprobar en el navegador que la columna aparece, la edición persiste, el icono se muestra solo en tareas vencidas no completadas, y que el layout (6 columnas, colspans) se ve correcto.
