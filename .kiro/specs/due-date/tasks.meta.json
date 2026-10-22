@@ -72,6 +72,18 @@
         "chatSessionId": "sess_04fa03d4-fb87-4f56-90e7-9d70303e53ec",
         "timestamp": 1792650117841
       }
+    ],
+    "8. Agregar la columna \"Vencimiento\" a la tabla": [
+      {
+        "executionId": "e6793ec9-645d-4ed7-ae8d-55cc55b68c33",
+        "chatSessionId": "sess_455acdef-bd33-4a3b-8293-8260cc66a226",
+        "timestamp": 1792650139383
+      },
+      {
+        "executionId": "e6793ec9-645d-4ed7-ae8d-55cc55b68c33",
+        "chatSessionId": "sess_455acdef-bd33-4a3b-8293-8260cc66a226",
+        "timestamp": 1792650369975
+      }
     ]
   }
 }

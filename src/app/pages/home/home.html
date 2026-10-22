@@ -13,6 +13,7 @@
             <th class="px-4 py-3 w-40">Estado</th>
             <th class="px-4 py-3 w-36">Creada</th>
             <th class="px-4 py-3 w-44">Fecha fin</th>
+            <th class="px-4 py-3 w-44">Vencimiento</th>
             <th class="px-4 py-3 w-12"></th>
           </tr>
         </thead>
@@ -31,6 +32,7 @@
                 aria-label="Título de la nueva tarea"
               />
             </td>
+            <td class="px-4 py-3 text-slate-400">—</td>
             <td class="px-4 py-3 text-slate-400">—</td>
             <td class="px-4 py-3 text-slate-400">—</td>
             <td class="px-4 py-3 text-slate-400">—</td>
@@ -79,6 +81,15 @@
                 } @else {
                   <span class="text-slate-400">—</span>
                 }
+              </td>
+              <td class="px-4 py-2">
+                <input
+                  type="date"
+                  [value]="task.dueDate ?? ''"
+                  (change)="updateDueDate(task, $any($event.target).value)"
+                  class="w-full rounded-md border border-transparent bg-transparent px-3 py-1.5 text-slate-700 outline-none hover:border-slate-200 focus:border-blue-400 focus:bg-white focus:ring-1 focus:ring-blue-400"
+                  aria-label="Fecha de vencimiento de la tarea"
+                />
               </td>
               <td class="px-4 py-2 text-center">
                 <div class="flex items-center justify-center gap-1">

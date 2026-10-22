@@ -36,7 +36,7 @@
   - Añadir `updateDueDate(task: Task, value: string)` en `Home` que mapee cadena vacía a `null`, evite guardados sin cambios y delegue en `db.update(task.id, { dueDate })`.
   - _Requisitos: 2.2, 2.3_
 
-- [ ] 8. Agregar la columna "Vencimiento" a la tabla
+- [x] 8. Agregar la columna "Vencimiento" a la tabla
   - En `src/app/pages/home/home.html`, agregar el `<th>` "Vencimiento" en el encabezado.
   - Agregar la celda de la nueva columna en la fila de creación (placeholder `—`).
   - Agregar en cada fila de tarea un `<input type="date">` enlazado a `task.dueDate` que invoque `updateDueDate` en `change`.
