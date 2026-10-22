@@ -1,0 +1,12 @@
+# Certificados y llaves
+*.pem
+*.cert
+*.crt
+*.key
+
+# Variables de entorno
+.env
+.env.*
+
+# Node 
+node_modules/
