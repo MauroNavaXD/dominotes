@@ -9,7 +9,7 @@
   - Verificar que `dueDate` se persiste con el resto de la tarea en el store `tasks`.
   - _Requisitos: 1.2, 1.4_
 
-- [ ] 3. Soportar edición y logging de `dueDate` en el servicio
+- [x] 3. Soportar edición y logging de `dueDate` en el servicio
   - Ampliar el tipo de `changes` en `TaskDbService.update()` a `Partial<Pick<Task, 'title' | 'status' | 'endDate' | 'dueDate'>>`.
   - Agregar una rama de logging independiente para `dueDate`: "Fecha de vencimiento establecida a <fecha>" cuando pasa a un valor no nulo y "Fecha de vencimiento eliminada" cuando pasa a `null`.
   - Asegurar que el cambio de `dueDate` NO active ni cancele la lógica de efectos de `status` sobre `endDate` y no modifique `endDate`/`status`.

@@ -75,14 +75,17 @@ export class TaskDbService {
   }
 
   /** Update one or more editable fields of a task. */
-  async update(id: string, changes: Partial<Pick<Task, 'title' | 'status' | 'endDate'>>): Promise<void> {
+  async update(
+    id: string,
+    changes: Partial<Pick<Task, 'title' | 'status' | 'endDate' | 'dueDate'>>,
+  ): Promise<void> {
     const current = this.tasks().find((task) => task.id === id);
     if (!current) {
       return;
     }
 
     const entries: TaskLogEntry[] = [];
-    const effective: Partial<Pick<Task, 'title' | 'status' | 'endDate'>> = { ...changes };
+    const effective: Partial<Pick<Task, 'title' | 'status' | 'endDate' | 'dueDate'>> = { ...changes };
 
     // Title change.
     if (changes.title !== undefined && changes.title !== current.title) {
@@ -108,6 +111,18 @@ export class TaskDbService {
       entries.push(
         this.logEntry(
           changes.endDate ? `Fecha fin cambiada a ${changes.endDate}` : 'Fecha fin eliminada',
+        ),
+      );
+    }
+
+    // dueDate change, independent of the status/endDate logic above:
+    // changing dueDate never triggers nor cancels the status-driven endDate effects.
+    if (changes.dueDate !== undefined && changes.dueDate !== current.dueDate) {
+      entries.push(
+        this.logEntry(
+          changes.dueDate
+            ? `Fecha de vencimiento establecida a ${changes.dueDate}`
+            : 'Fecha de vencimiento eliminada',
         ),
       );
     }

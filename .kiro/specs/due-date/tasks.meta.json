@@ -24,6 +24,18 @@
         "chatSessionId": "sess_1c29baa6-2700-4d17-98b8-da0fb2066118",
         "timestamp": 1792648624194
       }
+    ],
+    "3. Soportar edición y logging de `dueDate` en el servicio": [
+      {
+        "executionId": "692d99ea-7db2-4380-a593-08a98bad2ba0",
+        "chatSessionId": "sess_77d28697-79fa-47ce-9c4d-761a31e5da48",
+        "timestamp": 1792648849491
+      },
+      {
+        "executionId": "692d99ea-7db2-4380-a593-08a98bad2ba0",
+        "chatSessionId": "sess_77d28697-79fa-47ce-9c4d-761a31e5da48",
+        "timestamp": 1792649234259
+      }
     ]
   }
 }
