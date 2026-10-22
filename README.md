@@ -37,7 +37,7 @@ En la carpeta `scripts/` hay tres utilidades para facilitar el flujo de trabajo.
 |------|----------|-------------|---------|
 | 1. Preparar | Verifica Node.js/npm e instala dependencias | `./scripts/preparar.sh` | `scripts\preparar.bat` |
 | 2. Correr | Levanta el servidor de desarrollo | `./scripts/correr.sh` | `scripts\correr.bat` |
-| 3. Validar | Revisa tipado (TypeScript) y formato (Prettier) | `./scripts/validar.sh` | `scripts\validar.bat` |
+| 3. Validar | Audita dependencias, ESLint, tipado, formato, tests y build | `./scripts/validar.sh` | `scripts\validar.bat` |
 
 ### Mac / Linux
 
@@ -86,11 +86,15 @@ Si prefieres no usar los scripts, puedes ejecutar los comandos directamente:
 | Instalar dependencias | `npm ci` (o `npm install`) |
 | Servidor de desarrollo | `npm start` |
 | Compilar para producción | `npm run build` |
+| Build de verificación (producción) | `npm run build:check` |
 | Pruebas unitarias (Vitest) | `npm test` |
+| Pruebas unitarias en CI (corrida única) | `npm run test:ci` |
+| Auditar dependencias (high/critical) | `npm run audit` |
 | Revisar tipado | `npm run typecheck` |
 | Revisar formato | `npm run format:check` |
 | Corregir formato automáticamente | `npm run format` |
-| Lint (tipado + formato) | `npm run lint` |
+| ESLint (Angular) | `npm run lint:eslint` |
+| Lint (ESLint + tipado + formato) | `npm run lint` |
 
 ## Recursos adicionales
 
