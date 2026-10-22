@@ -1,14 +1,12 @@
 # Dominotes — Frontend
 
+[![Angular](https://img.shields.io/badge/Angular-22-DD0031?style=for-the-badge&logo=angular&logoColor=white)](https://angular.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-38BDF8?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Prettier](https://img.shields.io/badge/Prettier-F7B93E?style=for-the-badge&logo=prettier&logoColor=white)](https://prettier.io/)
+
 Aplicación web de gestión de tareas (to-do) construida con **Angular 22**. Permite crear tareas, seguir su estado (pendiente, en progreso, completada), registrar su historial de cambios y asignarles fechas (creación, fin y vencimiento).
-
-El proyecto usa:
-
-- **Angular 22** (standalone, router)
-- **TypeScript**
-- **Tailwind CSS 4** (vía PostCSS)
-- **Vitest** para pruebas unitarias
-- **Prettier** para formato de código
 
 ## Estructura del proyecto
 
