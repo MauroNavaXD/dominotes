@@ -47,11 +47,17 @@
   - Añadir `title` y `aria-label` indicando que la tarea está vencida.
   - _Requisitos: 5.1, 5.2, 5.3, 5.4_
 
-- [ ] 10. Ajustar los `colspan` de la tabla
+- [ ] 10. Ordenar las tareas por estado (solo presentación)
+  - En `TaskDbService.sort()` (`src/app/services/task-db.service.ts`), reemplazar el orden único por `createdAt` por un orden de dos claves: primero por prioridad de estado (`in-progress` → `pending` → `done`) mediante un mapa `STATUS_RANK`, y como clave secundaria `createdAt` descendente para un orden estable dentro de cada grupo.
+  - Garantizar que el ordenamiento sea solo de presentación: `sort()` devuelve un arreglo nuevo y no muta ni re-persiste los objetos `Task` (los `store.add`/`store.put` siguen guardando la tarea sin el criterio de orden).
+  - Como `sort()` ya se invoca en `load()`, `create()` y `update()`, verificar que un cambio de `status` reubique la tarea en el grupo correcto y refresque el signal `tasks`.
+  - _Requisitos: 8.1, 8.2, 8.3, 8.4_
+
+- [ ] 11. Ajustar los `colspan` de la tabla
   - Cambiar los `colspan="5"` de la fila de historial y del estado vacío a `colspan="6"`.
   - _Requisitos: 7.3_
 
-- [ ] 11. Verificar la implementación
+- [ ] 12. Verificar la implementación
   - Ejecutar la compilación/build del proyecto y corregir errores.
-  - Validar en el navegador: la columna aparece, la edición persiste, el icono se muestra solo en tareas vencidas no completadas, el estado se actualiza en vivo y el layout (6 columnas y colspans) es correcto.
-  - _Requisitos: 4.1-4.5, 5.1-5.4, 6.1-6.3, 7.1-7.3_
+  - Validar en el navegador: la columna aparece, la edición persiste, el icono se muestra solo en tareas vencidas no completadas, el estado se actualiza en vivo, las tareas se ordenan por estado (en progreso → pendientes → completadas) y el layout (6 columnas y colspans) es correcto.
+  - _Requisitos: 4.1-4.5, 5.1-5.4, 6.1-6.3, 7.1-7.3, 8.1-8.4_
