@@ -42,7 +42,7 @@
   - Agregar en cada fila de tarea un `<input type="date">` enlazado a `task.dueDate` que invoque `updateDueDate` en `change`.
   - _Requisitos: 2.1, 7.1, 7.2_
 
-- [ ] 9. Agregar el icono de advertencia para tareas vencidas
+- [x] 9. Agregar el icono de advertencia para tareas vencidas
   - En la celda del título, mostrar condicionalmente (`@if (isOverdue(task))`) un icono BoxIcons de alerta (p. ej. `bx bx-error`) con color de alerta Tailwind.
   - Añadir `title` y `aria-label` indicando que la tarea está vencida.
   - _Requisitos: 5.1, 5.2, 5.3, 5.4_

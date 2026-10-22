@@ -53,14 +53,24 @@
           @for (task of tasks(); track task.id) {
             <tr class="hover:bg-slate-50">
               <td class="px-4 py-2">
-                <input
-                  type="text"
-                  [value]="task.title"
-                  (blur)="updateTitle(task, $any($event.target).value)"
-                  (keyup.enter)="$any($event.target).blur()"
-                  class="w-full rounded-md border border-transparent bg-transparent px-3 py-1.5 text-slate-700 outline-none hover:border-slate-200 focus:border-blue-400 focus:bg-white focus:ring-1 focus:ring-blue-400"
-                  aria-label="Título de la tarea"
-                />
+                <div class="flex items-center gap-2">
+                  @if (isOverdue(task)) {
+                    <i
+                      class="bx bx-error shrink-0 text-lg text-red-500"
+                      title="Tarea vencida"
+                      aria-label="Tarea vencida"
+                      role="img"
+                    ></i>
+                  }
+                  <input
+                    type="text"
+                    [value]="task.title"
+                    (blur)="updateTitle(task, $any($event.target).value)"
+                    (keyup.enter)="$any($event.target).blur()"
+                    class="w-full rounded-md border border-transparent bg-transparent px-3 py-1.5 text-slate-700 outline-none hover:border-slate-200 focus:border-blue-400 focus:bg-white focus:ring-1 focus:ring-blue-400"
+                    aria-label="Título de la tarea"
+                  />
+                </div>
               </td>
               <td class="px-4 py-2">
                 <select

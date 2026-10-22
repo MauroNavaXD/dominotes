@@ -84,6 +84,23 @@
         "chatSessionId": "sess_455acdef-bd33-4a3b-8293-8260cc66a226",
         "timestamp": 1792650369975
       }
+    ],
+    "9. Agregar el icono de advertencia para tareas vencidas": [
+      {
+        "executionId": "6dfd4499-61fe-4511-9ec0-975da85ce9d4",
+        "chatSessionId": "sess_345acbe9-0859-427e-b972-498db72947f4",
+        "timestamp": 1792650416175
+      },
+      {
+        "executionId": "f4436668-c3be-435b-ad6e-0b6c69a4d81b",
+        "chatSessionId": "sess_faa32bc8-4274-4ab2-be38-7ce13bde845b",
+        "timestamp": 1792650575843
+      },
+      {
+        "executionId": "f4436668-c3be-435b-ad6e-0b6c69a4d81b",
+        "chatSessionId": "sess_faa32bc8-4274-4ab2-be38-7ce13bde845b",
+        "timestamp": 1792650818657
+      }
     ]
   }
 }
