@@ -48,6 +48,18 @@
         "chatSessionId": "sess_367033f3-fa6a-4486-a6d4-281977b79f07",
         "timestamp": 1792649481018
       }
+    ],
+    "6. Implementar el predicado `isOverdue`": [
+      {
+        "executionId": "6f2af51b-16dc-48a5-b617-8a5d128cd9d7",
+        "chatSessionId": "sess_b4c3bf7f-453d-4520-acdc-725e349e6366",
+        "timestamp": 1792649751880
+      },
+      {
+        "executionId": "6f2af51b-16dc-48a5-b617-8a5d128cd9d7",
+        "chatSessionId": "sess_b4c3bf7f-453d-4520-acdc-725e349e6366",
+        "timestamp": 1792649896456
+      }
     ]
   }
 }

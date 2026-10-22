@@ -120,6 +120,22 @@ export class Home implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Whether a task is overdue: it has a due date, is not done, and its due
+   * date is strictly before today. Due dates are `YYYY-MM-DD`, so a plain
+   * lexicographic string comparison matches chronological order and avoids
+   * building a `Date` in UTC. Reads `today()` so templates re-evaluate live
+   * when the date rolls over.
+   */
+  protected isOverdue(task: Task): boolean {
+    const dueDate = task.dueDate ?? null;
+    if (dueDate === null || task.status === 'done') {
+      return false;
+    }
+
+    return dueDate < this.today();
+  }
+
   protected statusClass(status: TaskStatus): string {
     switch (status) {
       case 'done':

@@ -26,7 +26,7 @@
   - Reutilizar una utilidad de fecha local `YYYY-MM-DD` consistente con `localDateString` del servicio.
   - _Requisitos: 6.1, 6.2, 6.3, 4.5_
 
-- [ ] 6. Implementar el predicado `isOverdue`
+- [x] 6. Implementar el predicado `isOverdue`
   - Añadir `isOverdue(task: Task): boolean` en `Home` que devuelva `true` solo si `dueDate` no es nulo, `status !== 'done'` y `dueDate < today()`.
   - Usar comparación lexicográfica de cadenas `YYYY-MM-DD` (orden cronológico, sin construir `Date` en UTC).
   - Hacer que dependa de `today()` para re-evaluación reactiva en vivo.
