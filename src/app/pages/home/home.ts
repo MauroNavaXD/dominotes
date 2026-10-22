@@ -1,14 +1,18 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Task, TaskLogEntry, TaskStatus, TASK_STATUSES, TASK_STATUS_LABELS } from '../../models/task';
 import { TaskDbService } from '../../services/task-db.service';
+import { localDateString } from '../../utils/date';
+
+/** How often the live "today" signal checks whether the local date changed. */
+const TODAY_REFRESH_MS = 60_000;
 
 @Component({
   selector: 'app-home',
   imports: [FormsModule],
   templateUrl: './home.html',
 })
-export class Home implements OnInit {
+export class Home implements OnInit, OnDestroy {
   private readonly db = inject(TaskDbService);
 
   protected readonly tasks = this.db.tasks;
@@ -21,8 +25,31 @@ export class Home implements OnInit {
   /** Id of the task whose change history is open, or null. */
   protected readonly openLogTaskId = signal<string | null>(null);
 
+  /**
+   * Local date of today as `YYYY-MM-DD`. Refreshed live so time-dependent
+   * computations (e.g. overdue detection) re-evaluate without a reload.
+   */
+  protected readonly today = signal(localDateString());
+
+  /** Handle for the interval that keeps `today` fresh; cleared on destroy. */
+  private todayIntervalId: ReturnType<typeof setInterval> | null = null;
+
   ngOnInit(): void {
     void this.db.load();
+
+    this.todayIntervalId = setInterval(() => {
+      const current = localDateString();
+      if (current !== this.today()) {
+        this.today.set(current);
+      }
+    }, TODAY_REFRESH_MS);
+  }
+
+  ngOnDestroy(): void {
+    if (this.todayIntervalId !== null) {
+      clearInterval(this.todayIntervalId);
+      this.todayIntervalId = null;
+    }
   }
 
   protected createTask(): void {

@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { Task, TaskLogEntry, TASK_STATUS_LABELS } from '../models/task';
+import { localDateString } from '../utils/date';
 
 const DB_NAME = 'dominotes';
 const DB_VERSION = 1;
@@ -100,7 +101,7 @@ export class TaskDbService {
     if (changes.status !== undefined) {
       // Automatic endDate side effect driven by the status.
       if (changes.status === 'done' && !('endDate' in changes)) {
-        effective.endDate = this.localDateString(new Date());
+        effective.endDate = localDateString(new Date());
         entries.push(this.logEntry(`Fecha fin establecida automáticamente a ${effective.endDate}`));
       } else if (changes.status !== 'done' && current.endDate !== null) {
         effective.endDate = null;
@@ -149,14 +150,6 @@ export class TaskDbService {
   /** Build a log entry stamped with the current time. */
   private logEntry(message: string): TaskLogEntry {
     return { timestamp: new Date().toISOString(), message };
-  }
-
-  /** Local date as `YYYY-MM-DD` (matches `<input type="date">`; not UTC). */
-  private localDateString(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
   }
 
   private request<T>(request: IDBRequest<T>): Promise<T> {

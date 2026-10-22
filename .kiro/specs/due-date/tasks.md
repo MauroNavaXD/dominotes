@@ -19,7 +19,7 @@
   - Garantizar que las tareas cargadas desde IndexedDB sin `dueDate` se traten como `null` (p. ej. normalizando con `?? null` donde se consuma el valor).
   - _Requisitos: 1.3_
 
-- [ ] 5. Implementar la señal de tiempo "hoy" con actualización en vivo
+- [x] 5. Implementar la señal de tiempo "hoy" con actualización en vivo
   - En `Home` (`src/app/pages/home/home.ts`), agregar una `signal` `today` con la fecha local `YYYY-MM-DD`.
   - Inicializarla al construir el componente y refrescarla con un `setInterval` (~60 s) que la actualice solo si la fecha local cambió.
   - Implementar `OnDestroy` y limpiar el intervalo para evitar fugas.
