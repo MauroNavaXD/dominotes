@@ -32,7 +32,7 @@
   - Hacer que dependa de `today()` para re-evaluación reactiva en vivo.
   - _Requisitos: 4.1, 4.2, 4.3, 4.4, 4.5_
 
-- [ ] 7. Implementar el manejador de edición `updateDueDate`
+- [x] 7. Implementar el manejador de edición `updateDueDate`
   - Añadir `updateDueDate(task: Task, value: string)` en `Home` que mapee cadena vacía a `null`, evite guardados sin cambios y delegue en `db.update(task.id, { dueDate })`.
   - _Requisitos: 2.2, 2.3_
 

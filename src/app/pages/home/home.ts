@@ -79,6 +79,15 @@ export class Home implements OnInit, OnDestroy {
     void this.db.update(task.id, { status });
   }
 
+  protected updateDueDate(task: Task, value: string): void {
+    const dueDate = value === '' ? null : value;
+    if (dueDate === (task.dueDate ?? null)) {
+      return;
+    }
+
+    void this.db.update(task.id, { dueDate });
+  }
+
   protected removeTask(task: Task): void {
     void this.db.remove(task.id);
   }

@@ -60,6 +60,18 @@
         "chatSessionId": "sess_b4c3bf7f-453d-4520-acdc-725e349e6366",
         "timestamp": 1792649896456
       }
+    ],
+    "7. Implementar el manejador de edición `updateDueDate`": [
+      {
+        "executionId": "afd85093-9518-44a8-bb43-d4d129e0d306",
+        "chatSessionId": "sess_04fa03d4-fb87-4f56-90e7-9d70303e53ec",
+        "timestamp": 1792649952940
+      },
+      {
+        "executionId": "afd85093-9518-44a8-bb43-d4d129e0d306",
+        "chatSessionId": "sess_04fa03d4-fb87-4f56-90e7-9d70303e53ec",
+        "timestamp": 1792650117841
+      }
     ]
   }
 }
