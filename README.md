@@ -1,59 +1,99 @@
-# Frontend
+# Dominotes — Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.2.
+Aplicación web de gestión de tareas (to-do) construida con **Angular 22**. Permite crear tareas, seguir su estado (pendiente, en progreso, completada), registrar su historial de cambios y asignarles fechas (creación, fin y vencimiento).
 
-## Development server
+El proyecto usa:
 
-To start a local development server, run:
+- **Angular 22** (standalone, router)
+- **TypeScript**
+- **Tailwind CSS 4** (vía PostCSS)
+- **Vitest** para pruebas unitarias
+- **Prettier** para formato de código
 
-```bash
-ng serve
+## Estructura del proyecto
+
+```
+frontend/
+├── src/app/
+│   ├── models/      # Interfaces y tipos (Task, TaskStatus, ...)
+│   ├── pages/       # Vistas/páginas de la aplicación
+│   ├── services/    # Lógica de datos y persistencia
+│   └── app.*        # Configuración raíz, rutas y componente principal
+├── scripts/         # Scripts de ayuda (preparar / correr / validar)
+└── public/          # Recursos estáticos
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Requisitos previos
 
-## Code scaffolding
+- [Node.js](https://nodejs.org/) (incluye `npm`)
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+Los scripts verifican automáticamente que Node.js y npm estén instalados antes de continuar.
 
-```bash
-ng generate component component-name
-```
+## Puesta en marcha con scripts
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+En la carpeta `scripts/` hay tres utilidades para facilitar el flujo de trabajo. Cada una existe en dos versiones: `.sh` para **Mac/Linux** y `.bat` para **Windows**.
 
-```bash
-ng generate --help
-```
+> Ejecuta siempre los scripts **desde la carpeta `frontend`**.
 
-## Building
+| Paso | Qué hace | Mac / Linux | Windows |
+|------|----------|-------------|---------|
+| 1. Preparar | Verifica Node.js/npm e instala dependencias | `./scripts/preparar.sh` | `scripts\preparar.bat` |
+| 2. Correr | Levanta el servidor de desarrollo | `./scripts/correr.sh` | `scripts\correr.bat` |
+| 3. Validar | Revisa tipado (TypeScript) y formato (Prettier) | `./scripts/validar.sh` | `scripts\validar.bat` |
 
-To build the project run:
+### Mac / Linux
 
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+La primera vez puede que necesites dar permisos de ejecución a los scripts:
 
 ```bash
-ng test
+chmod +x scripts/*.sh
 ```
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
+Luego:
 
 ```bash
-ng e2e
+# 1. Preparar el entorno (instala dependencias)
+./scripts/preparar.sh
+
+# 2. Levantar el frontend en modo desarrollo
+./scripts/correr.sh
+
+# 3. Validar el código antes de subir cambios
+./scripts/validar.sh
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+### Windows
 
-## Additional Resources
+Desde `cmd` o PowerShell, dentro de la carpeta `frontend`:
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+```bat
+REM 1. Preparar el entorno (instala dependencias)
+scripts\preparar.bat
+
+REM 2. Levantar el frontend en modo desarrollo
+scripts\correr.bat
+
+REM 3. Validar el código antes de subir cambios
+scripts\validar.bat
+```
+
+Una vez levantado el servidor, abre tu navegador en **http://localhost:4200/**. La aplicación se recarga automáticamente al modificar los archivos fuente. Para detener el servidor usa `Ctrl + C`.
+
+## Comandos npm equivalentes
+
+Si prefieres no usar los scripts, puedes ejecutar los comandos directamente:
+
+| Acción | Comando |
+|--------|---------|
+| Instalar dependencias | `npm ci` (o `npm install`) |
+| Servidor de desarrollo | `npm start` |
+| Compilar para producción | `npm run build` |
+| Pruebas unitarias (Vitest) | `npm test` |
+| Revisar tipado | `npm run typecheck` |
+| Revisar formato | `npm run format:check` |
+| Corregir formato automáticamente | `npm run format` |
+| Lint (tipado + formato) | `npm run lint` |
+
+## Recursos adicionales
+
+Para más detalles sobre Angular CLI, consulta la [referencia de comandos de Angular CLI](https://angular.dev/tools/cli).
