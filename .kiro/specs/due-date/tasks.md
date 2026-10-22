@@ -4,7 +4,7 @@
   - Añadir `dueDate: string | null` a la interfaz `Task` en `src/app/models/task.ts` con comentario de formato `YYYY-MM-DD`.
   - _Requisitos: 1.1_
 
-- [ ] 2. Soportar `dueDate` en la creación y persistencia de tareas
+- [x] 2. Soportar `dueDate` en la creación y persistencia de tareas
   - En `TaskDbService.create()` (`src/app/services/task-db.service.ts`), inicializar `dueDate: null` en el objeto `Task`.
   - Verificar que `dueDate` se persiste con el resto de la tarea en el store `tasks`.
   - _Requisitos: 1.2, 1.4_

@@ -63,6 +63,7 @@ export class TaskDbService {
       status: 'pending',
       createdAt: new Date().toISOString(),
       endDate: null,
+      dueDate: null,
       log: [this.logEntry('Tarea creada')],
     };
 

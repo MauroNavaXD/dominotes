@@ -12,6 +12,18 @@
         "chatSessionId": "sess_9e89ccee-93c8-40c1-9acb-16c6fb8013b0",
         "timestamp": 1792093714017
       }
+    ],
+    "2. Soportar `dueDate` en la creación y persistencia de tareas": [
+      {
+        "executionId": "e485c2f6-989c-4814-a439-bf0499809f08",
+        "chatSessionId": "sess_1c29baa6-2700-4d17-98b8-da0fb2066118",
+        "timestamp": 1792648437893
+      },
+      {
+        "executionId": "e485c2f6-989c-4814-a439-bf0499809f08",
+        "chatSessionId": "sess_1c29baa6-2700-4d17-98b8-da0fb2066118",
+        "timestamp": 1792648624194
+      }
     ]
   }
 }
