@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Cobertura de tests en services y utils",
+      "trigger": "PostToolUse",
+      "description": "Después de que el agente crea o modifica un archivo de services/ o utils/, verifica que tenga pruebas unitarias que cubran el cambio y ejecuta la suite.",
+      "matcher": "^(fs_write|str_replace|fs_append)$",
+      "action": {
+        "type": "agent",
+        "prompt": "Revisa la ruta del archivo que acabas de crear o modificar.\n\nSi NO coincide con `src/app/**/services/**/*.ts` o `src/app/**/utils/**/*.ts`, o si es un `*.spec.ts`, ignora este recordatorio y continúa con lo que estabas haciendo.\n\nSi SÍ coincide (archivo de producción de services o utils):\n1. Comprueba que exista su spec junto a él (`<nombre>.ts` → `<nombre>.spec.ts`). Si no existe, créalo.\n2. Asegúrate de que el spec cubra el comportamiento nuevo o modificado: cada función o método público afectado, sus casos borde y las reglas de negocio de `product.md` que toque. Agrega o actualiza los tests que falten.\n3. Sigue las reglas del steering `.kiro/steering/unit-testing.md` (fechas locales deterministas, fake de IndexedDB en `src/testing/`, mocks por DI, limpieza en `afterEach`, sin `fakeAsync`). No instales dependencias nuevas sin preguntar.\n4. Cuando termines TODOS los cambios de esta tarea (no después de cada edición), ejecuta `npm run test:ci` y confirma que pasan. Si algún test falla, corrige la causa y vuelve a ejecutarlos. Después ejecuta `npm run lint`.\n5. En tu resumen final indica qué specs creaste o actualizaste y el resultado de los tests."
+      }
+    }
+  ]
+}
