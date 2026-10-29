@@ -1,3 +1,7 @@
+---
+inclusion: always
+---
+
 # Estructura y organización del repositorio
 
 Este documento define **cómo** organizar los archivos del repositorio a medida que crece. No describe el estado actual: es la norma que debe seguir todo archivo nuevo o movido. Si el código existente no cumple estas reglas, no lo reorganices por iniciativa propia. Propón la migración y espera confirmación.

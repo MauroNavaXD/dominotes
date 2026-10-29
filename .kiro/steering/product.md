@@ -1,3 +1,7 @@
+---
+inclusion: always
+---
+
 # Producto — DomiNotes
 
 ## Qué es
